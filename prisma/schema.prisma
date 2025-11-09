@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Teacher {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  quizzes   Quiz[]
+  createdAt DateTime @default(now())
+}
+
+model Student {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  rollNo    String?
+  password  String
+  attempts  Attempt[]
+  createdAt DateTime @default(now())
+}
+
+model Quiz {
+  id               String     @id @default(uuid())
+  teacherId        String
+  teacher          Teacher    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  title            String
+  description      String?
+  timeLimit        Int?
+  maxAttempts      Int?       @default(1)
+  status           QuizStatus @default(DRAFT)
+  startAt          DateTime?
+  endAt            DateTime?
+  shuffleQuestions Boolean    @default(false)
+  shuffleOptions   Boolean    @default(false)
+  questions        Question[]
+  attempts         Attempt[]
+  createdAt        DateTime   @default(now())
+}
+
+model Question {
+  id         String     @id @default(uuid())
+  quizId     String
+  quiz       Quiz       @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text       String
+  imageUrl   String?
+  options    Option[]
+  createdAt  DateTime   @default(now())
+}
+
+model Option {
+  id         String     @id @default(uuid())
+  questionId String
+  question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean    @default(false)
+}
+
+model Attempt {
+  id          String     @id @default(uuid())
+  quizId      String
+  studentId   String
+  quiz        Quiz       @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  student     Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score       Int?       @default(0)
+  startedAt   DateTime   @default(now())
+  completedAt DateTime?
+  answers     Json       @default("{}")
+  createdAt   DateTime   @default(now())
+}
+
+enum QuizStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
